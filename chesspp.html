@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>ChessP – Global Beta</title>
+<style>
+body{margin:0;background:#1b1b1b;color:#fff;font-family:Arial,sans-serif;}
+#menu{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;padding:10px;background:#111;border-bottom:2px solid #222;}
+select,button{padding:6px 12px;border-radius:6px;border:none;cursor:pointer;background:#333;color:#fff;transition:0.2s;}
+select:hover,button:hover{background:#555;}
+#game{display:flex;justify-content:center;margin-top:15px;}
+#board{display:grid;grid-template-columns:repeat(8,64px);border:4px solid #000;box-shadow:0 0 10px #000;}
+.square{width:64px;height:64px;display:flex;align-items:center;justify-content:center;font-size:36px;cursor:pointer;transition:0.3s;}
+.white{background:#f0d9b5}.black{background:#b58863}.selected{outline:3px solid red;}
+#info{text-align:center;margin-top:10px;font-size:18px;}
+#tasks,#shop,#proplus{text-align:center;margin-top:15px;}
+.task,.shop-item,.mod-btn{display:inline-block;padding:6px 12px;margin:5px;background:#333;border-radius:6px;cursor:pointer;transition:0.2s;}
+.task:hover,.shop-item:hover,.mod-btn:hover{background:#555;}
+h3{margin:5px 0;}
+</style>
+</head>
+<body>
+<div id="menu">
+<select id="mode"><option>Normal</option><option>Eğitim</option></select>
+<select id="skin"><option value="classic">Klasik</option><option value="gold">Altın</option><option value="fire">Ateş</option><option value="silver">Gümüş</option><option value="ice">Buz</option></select>
+<select id="country"><option>Türkiye</option><option>USA</option><option>Germany</option><option>France</option><option>Spain</option><option>Italy</option><option>Japan</option><option>China</option><option>India</option><option>Brazil</option><option>Russia</option></select>
+<button onclick="resetGame()">Yeniden Başla</button>
+</div>
+<div id="game"><div id="board"></div></div>
+<div id="info">Sıra: Beyaz | Altın: <span id="gold">0</span></div>
+<div id="tasks"><h3>Görevler (Demo 56 Görev)</h3></div>
+<div id="shop"><h3>Dükkan</h3></div>
+<div id="proplus"><h3>Pro / Plus Mod</h3><button class="mod-btn" onclick="buyPro()">Pro Satın Al</button><button class="mod-btn" onclick="buyPlus()">Plus Satın Al</button></div>
+<script>
+const icons={
+classic:{r:"♜",n:"♞",b:"♝",q:"♛",k:"♚",p:"♟",R:"♖",N:"♘",B:"♗",Q:"♕",K:"♔",P:"♙"},
+gold:{r:"♖",n:"♘",b:"♗",q:"♕",k:"♔",p:"♙",R:"♖",N:"♘",B:"♗",Q:"♕",K:"♔",P:"♙"},
+fire:{r:"🔥",n:"♞",b:"♝",q:"♛",k:"♚",p:"♟",R:"♖",N:"♘",B:"♗",Q:"♕",K:"♔",P:"♙"},
+silver:{r:"♖",n:"♘",b:"♗",q:"♕",k:"♔",p:"♙",R:"♖",N:"♘",B:"♗",Q:"♕",K:"♔",P:"♙"},
+ice:{r:"❄️",n:"♞",b:"♝",q:"♛",k:"♚",p:"♟",R:"♖",N:"♘",B:"♗",Q:"♕",K:"♔",P:"♙"}
+};
+let board=[["r","n","b","q","k","b","n","r"],["p","p","p","p","p","p","p","p"],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["","","","","","","",""],["P","P","P","P","P","P","P","P"],["R","N","B","Q","K","B","N","R"]];
+let turn="white",selected=null,gold=0;
+const boardDiv=document.getElementById("board"),info=document.getElementById("info"),tasksDiv=document.getElementById("tasks"),shopDiv=document.getElementById("shop");
+let currentSkin="classic";
+document.getElementById("skin").onchange=e=>{currentSkin=e.target.value;draw();}
+function draw(){
+boardDiv.innerHTML="";for(let r=0;r<8;r++){for(let c=0;c<8;c++){
+const sq=document.createElement("div");sq.className="square "+((r+c)%2?"black":"white");if(selected && selected[0]==r && selected[1]==c) sq.classList.add("selected");
+sq.textContent=board[r][c]?icons[currentSkin][board[r][c]]:"";sq.onclick=()=>click(r,c);boardDiv.appendChild(sq);
+}}info.innerHTML="Sıra: "+(turn=="white"?"Beyaz":"Siyah")+" | Altın: "+gold;}
+function click(r,c){
+const p=board[r][c];
+if(selected){
+const [sr,sc]=selected,sp=board[sr][sc];
+if(valid(sp,sr,sc,r,c)){
+if(board[r][c].toLowerCase()=="k") return;
+board[r][c]=sp;board[sr][sc]="";turn=turn=="white"?"black":"white";maybeAd();
+}selected=null;draw();return;}
+if(!p) return;if(turn=="white" && p!==p.toUpperCase()) return;if(turn=="black" && p!==p.toLowerCase()) return;
+selected=[r,c];draw();}
+function valid(p,sr,sc,r,c){
+let dr=r-sr,dc=c-sc,a=Math.abs;
+if(p.toLowerCase()=="p"){let d=p=="P"?-1:1;if(dc==0 && dr==d && board[r][c]=="") return true;if(a(dc)==1 && dr==d && board[r][c]!="") return true;}
+if(p.toLowerCase()=="r") return sr==r||sc==c;
+if(p.toLowerCase()=="b") return a(dr)==a(dc);
+if(p.toLowerCase()=="q") return sr==r||sc==c||a(dr)==a(dc);
+if(p.toLowerCase()=="n") return a(dr*dc)==2;
+if(p.toLowerCase()=="k") return a(dr)<=1&&a(dc)<=1;
+return false;}
+function resetGame(){location.reload();}
+function initTasks(){tasksDiv.innerHTML="<h3>Görevler (Demo 56 Görev)</h3>";for(let i=1;i<=56;i++){const t=document.createElement("div");t.className="task";t.textContent="Görev "+i+" (3 Altın)";t.onclick=()=>{gold+=3;alert("Görev tamamlandı! Altın +3");draw();};tasksDiv.appendChild(t);}}
+function initShop(){shopDiv.innerHTML="<h3>Dükkan (Demo)</h3>";["Altın Skin","Ateş Skin","Gümüş Skin","Buz Skin","Pro Mod"].forEach(item=>{const s=document.createElement("div");s.className="shop-item";s.textContent=item;s.onclick=()=>{alert(item+" satın alındı (demo)");};shopDiv.appendChild(s);});}
+function buyPro(){alert("Pro Mod Satın Alındı (Demo)");}
+function buyPlus(){alert("Plus Mod Satın Alındı (Demo)");}
+function maybeAd(){if(Math.random()<0.2)setTimeout(()=>{alert("5 Saniyelik Reklam Demo")},100);}
+initTasks();initShop();draw();
+</script>
+</body>
+</html>
